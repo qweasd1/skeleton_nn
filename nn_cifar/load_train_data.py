@@ -25,7 +25,7 @@ class TrainData:
 class AdaptiveTrainData:
     def __init__(self, X_filepath, y_filepath, device):
 
-        self.expand_size = 50
+        self.expand_size = 100
         self.end_size = 200
 
         self.models = []
@@ -37,8 +37,12 @@ class AdaptiveTrainData:
 
         self.is_target_table = torch.full((self.size,), True, dtype=torch.bool)
         self.is_target_table[self.y == 0] = False
-        self.is_consumed_table = self.is_target_table.clone()
 
+        self.negative_samples_indice = (~self.is_target_table).nonzero().view(-1)
+        self.negative_samples_X = self.X[self.negative_samples_indice]
+        self.negative_samples_y = self.y[self.negative_samples_indice]
+
+        self.is_consumed_table = self.is_target_table.clone()
 
         self.find_init_train_indice()
 
@@ -46,8 +50,8 @@ class AdaptiveTrainData:
 
         print("left {0}".format(self.is_consumed_table.sum().item()))
 
-        positive_sample_size = 50
-        negative_sample_size = 200
+        positive_sample_size = 100
+        negative_sample_size = 90
 
         left_positive_indice = ((self.y == 1) & self.is_consumed_table).nonzero().view(-1)
 
@@ -60,7 +64,7 @@ class AdaptiveTrainData:
             positive_sample = left_positive_indice[:self.end_size]
 
         negative_sample = self.y.eq(0).nonzero()[:negative_sample_size].view(-1)
-        self.next_train_indice = torch.cat((positive_sample,negative_sample))
+        self.next_train_indice = torch.cat((positive_sample, negative_sample))
 
         self.is_consumed_table[self.next_train_indice] = False
 
@@ -84,19 +88,46 @@ class AdaptiveTrainData:
         self.models.append(self.current_model)
         return self.find_init_train_indice()
 
-    def evaluate_and_expand(self,model):
+    def save_model(self, root, target):
+        for i, model in enumerate(self.models):
+            torch.save(model.state_dict(), "{2}/{0}_{1}".format(target, i, root))
+
+    def find_to_expand(self, model):
+        to_expand = torch.Tensor([]).long()
+        find_error_size = self.expand_size * 5
+        batch_count = math.ceil(len(self.negative_samples_indice) / find_error_size)
+        left = self.expand_size
+        for i in range(batch_count):
+            start = i * find_error_size
+            end = (i + 1) * find_error_size
+            to_expand_segement = (model(self.negative_samples_X[start:end]).argmax(axis=1) != self.negative_samples_y[
+                                                                                              start:end]).nonzero().view(
+                -1)[:left] + start
+            left -= len(to_expand_segement)
+            to_expand = torch.cat((to_expand, self.negative_samples_indice[to_expand_segement]))
+            if left == 0:
+                break
+        return to_expand
+
+    def evaluate_and_expand(self, model):
         self.current_model = model
         y_p = model(self.current_X).argmax(axis=1)
         acc = (y_p == self.current_y).sum().item() / self.current_size
-        if acc > 0.95:
-            y_p_all = model(self.X).argmax(axis=1)
+        if acc > 0.9999:
 
-            all_negative_sample_indice = ((y_p_all != self.y) & ~self.is_target_table)
-            print("error counts: ".format(all_negative_sample_indice))
-            to_expand = all_negative_sample_indice.nonzero()[:self.expand_size].view(-1)
-            self.next_train_indice = torch.cat((self.next_train_indice,to_expand))
+            # old way to find to expand
+            # y_p_all = model(self.X).argmax(axis=1)
+
+            # all_negative_sample_indice = ((y_p_all != self.y) & ~self.is_target_table)
+            # to_expand = all_negative_sample_indice.nonzero()[:self.expand_size].view(-1)
+
+            # new way to find to expand
+            to_expand = self.find_to_expand(model)
+
+            self.next_train_indice = torch.cat((self.next_train_indice, to_expand))
             print("data_size: {0}".format(len(self.next_train_indice)))
             if len(to_expand) == 0:
+                y_p_all = model(self.X).argmax(axis=1)
                 all_positive_instance_indice = ((y_p_all == self.y) & self.is_target_table)
                 self.is_consumed_table[all_positive_instance_indice] = False
                 raise AddModelException()
