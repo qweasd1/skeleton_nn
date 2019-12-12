@@ -8,12 +8,12 @@ from nn_cifar.explore_images import apply, create_attention_filter
 
 data_path = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/cifar-10-batches-py"
 
-X_train = np.zeros((50000, 3, 32, 32),dtype="float32")
-y_train = np.zeros((50000,),dtype="long")
+X_train = np.zeros((10000, 3, 32, 32),dtype="float32")
+y_train = np.zeros((10000,),dtype="long")
 
 
-for i in range(5):
-    with open("{0}/data_batch_{1}".format(data_path,i+1),"rb") as file:
+for i in range(1):
+    with open("{0}/test_batch".format(data_path),"rb") as file:
         _data = pickle.load(file,encoding='bytes')
         data = _data[b"data"]
         label = _data[b"labels"]
@@ -22,7 +22,7 @@ for i in range(5):
         y_train[i * 10000:(i + 1) * 10000] = np.array(label).astype("long")
 
 
-img_root = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/rgb_att_2"
+img_root = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/rgb_test_att_2"
 
 # filter
 _filter = create_attention_filter(32,32,3,2)

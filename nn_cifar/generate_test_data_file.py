@@ -8,12 +8,12 @@ from nn_cifar.generate_gray_images import auto_canny
 
 data_path = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/cifar-10-batches-py"
 
-X_train = np.zeros((50000, 3, 32, 32),dtype="uint8")
-y_train = np.zeros((50000,),dtype="long")
+X_train = np.zeros((10000, 3, 32, 32),dtype="uint8")
+y_train = np.zeros((10000,),dtype="long")
 
 
-for i in range(5):
-    with open("{0}/data_batch_{1}".format(data_path,i+1),"rb") as file:
+for i in range(1):
+    with open("{0}/test_batch".format(data_path),"rb") as file:
         _data = pickle.load(file,encoding='bytes')
         data = _data[b"data"]
         label = _data[b"labels"]
@@ -80,7 +80,8 @@ def generate_att_2(X):
 
 # to_tensor(normalize_img(X_train_gray),"X_gray")
 # to_tensor(normalize_img(X_train_edge),"X_edge")
-to_tensor(normalize_img(generate_att_2(X_train)),"X_att2")
-# to_tensor(X,y,"Xt","yt")
+to_tensor(normalize_img(X_train),"Xt")
+to_tensor(normalize_img(generate_att_2(X_train)),"Xt_att2")
+to_tensor(y_train,"yt")
 
 

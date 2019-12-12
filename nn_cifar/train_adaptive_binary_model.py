@@ -6,7 +6,7 @@ from torch.optim.adamw import AdamW
 import torch.nn.functional as F
 import time
 
-X_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/X_gray.pt"
+X_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/X_att2.pt"
 y_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/y_1.pt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

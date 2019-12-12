@@ -23,15 +23,20 @@ class TrainData:
 
 
 class AdaptiveTrainData:
-    def __init__(self, X_filepath, y_filepath, device):
+    def __init__(self, X_filepath, y_filepath, device,state_path=None):
+        self.X = torch.load(X_filepath).to(device)
+        self.y = torch.load(y_filepath).to(device)
+        self.device = device
+        self.init_state(state_path)
 
+
+    def init_state(self,state_path=None):
         self.expand_size = 100
         self.end_size = 200
 
         self.models = []
 
-        self.X = torch.load(X_filepath).to(device)
-        self.y = torch.load(y_filepath).to(device)
+
         self.size = self.X.size()[0]
         self.next_train_indice = []
 
@@ -41,17 +46,20 @@ class AdaptiveTrainData:
         self.negative_samples_indice = (~self.is_target_table).nonzero().view(-1)
         self.negative_samples_X = self.X[self.negative_samples_indice]
         self.negative_samples_y = self.y[self.negative_samples_indice]
-
-        self.is_consumed_table = self.is_target_table.clone()
+        if state_path is None:
+            self.is_consumed_table = self.is_target_table.clone()
+        else:
+            self.is_consumed_table = torch.load(state_path)["is_consumed_table"]
 
         self.find_init_train_indice()
+
 
     def find_init_train_indice(self):
 
         print("left {0}".format(self.is_consumed_table.sum().item()))
 
-        positive_sample_size = 100
-        negative_sample_size = 90
+        positive_sample_size = 500
+        negative_sample_size = 100
 
         left_positive_indice = ((self.y == 1) & self.is_consumed_table).nonzero().view(-1)
 
@@ -85,12 +93,12 @@ class AdaptiveTrainData:
         return iterator()
 
     def new_model(self):
-        self.models.append(self.current_model)
+        # self.models.append(self.current_model)
         return self.find_init_train_indice()
 
-    def save_model(self, root, target):
-        for i, model in enumerate(self.models):
-            torch.save(model.state_dict(), "{2}/{0}_{1}".format(target, i, root))
+    # def save_model(self, root, target):
+    #     for i, model in enumerate(self.models):
+    #         torch.save(model.state_dict(), "{2}/{0}_{1}".format(target, i, root))
 
     def find_to_expand(self, model):
         to_expand = torch.Tensor([]).long()
@@ -113,7 +121,7 @@ class AdaptiveTrainData:
         self.current_model = model
         y_p = model(self.current_X).argmax(axis=1)
         acc = (y_p == self.current_y).sum().item() / self.current_size
-        if acc > 0.9999:
+        if acc > 0.95:
 
             # old way to find to expand
             # y_p_all = model(self.X).argmax(axis=1)
@@ -133,6 +141,19 @@ class AdaptiveTrainData:
                 raise AddModelException()
 
         return acc
+
+    def reset_current_model(self):
+        print("reset model")
+        self.is_consumed_table[self.next_train_indice] = True
+        self.find_init_train_indice()
+
+    def save(self,target):
+        self.reset_current_model()
+        torch.save({"is_consumed_table":self.is_consumed_table},"./state_{0}".format(target))
+
+
+
+
 
 
 class AddModelException(Exception):

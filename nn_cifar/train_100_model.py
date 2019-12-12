@@ -1,19 +1,19 @@
 from nn_cifar.load_train_data import TrainData
-from nn_cifar.cnn_model import CNNModel
+from nn_cifar.cnn_100_model import CNNModel
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
 import time
 
-X_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/X_att2.pt"
-y_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/y.pt"
+X_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/100/X.pt"
+y_filepath = "/Users/zhendongwang/Documents/projects/phd/skeleton_nn/code/nn_cifar/data/100/y.pt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 train_data = TrainData(X_filepath, y_filepath, device)
 
 
-model = CNNModel(10)
+model = CNNModel(100)
 
 def get_n_params(model):
     pp=0
@@ -27,7 +27,7 @@ def get_n_params(model):
 print("model parameters: {0}".format(get_n_params(model)))
 
 model.to(device)
-optimizer = Adam(model.parameters(),lr=0.01)
+optimizer = Adam(model.parameters(),lr=0.001)
 
 
 start = time.time()

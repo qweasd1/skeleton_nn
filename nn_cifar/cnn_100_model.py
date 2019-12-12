@@ -14,13 +14,13 @@ class CNNModel(nn.Module):
         # self.final_hidden_size =  5
         # self.kernal_size = 5
 
-        # all model (GPU 30004.388s 0.968 on training, acc 0.5483 on test data set)
         # self.input_channel = 3
         # self.channel_1 = 20
         # self.channel_2 = 30
         # self.hidden_1 = 100
         # self.final_hidden_size = 6
         # self.kernal_size = 3
+
 
         # All in one model:
         # self.input_channel = 3
@@ -30,26 +30,12 @@ class CNNModel(nn.Module):
         # self.final_hidden_size = 5
         # self.kernal_size = 5
 
-        # self.input_channel = 3
-        # self.channel_1 = 8
-        # self.channel_2 = 16
-        # self.hidden_1 = 80
-        # self.final_hidden_size = 5
-        # self.kernal_size = 5
-
-        # self.input_channel = 3
-        # self.channel_1 = 40
-        # self.channel_2 = 100
-        # self.hidden_1 = 300
-        # self.final_hidden_size = 5
-        # self.kernal_size = 5
-
         self.input_channel = 3
         self.channel_1 = 40
-        self.channel_2 = 200
-        self.hidden_1 = 500
-        self.final_hidden_size = 6
-        self.kernal_size = 3
+        self.channel_2 = 100
+        self.hidden_1 = 300
+        self.final_hidden_size = 5
+        self.kernal_size = 5
 
         # gray and edge cnn
         # self.input_channel = 1
